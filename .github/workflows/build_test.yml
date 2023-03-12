@@ -1,0 +1,15 @@
+name: Build & test iOS package
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    name: Build & test iOS package
+    runs-on: macos-latest
+    steps:
+    - uses: actions/checkout@v3.3.0
+    - name: Run tests
+      run: xcodebuild -scheme NetworkXI test -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 14' | xcpretty

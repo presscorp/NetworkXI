@@ -1,0 +1,20 @@
+name: Pull Request title check
+
+on:
+  pull_request:
+    types:
+      - opened
+      - edited
+      - reopened
+      - synchronize
+    branches:
+      - main
+
+jobs:
+  check_pull_request_title:
+    name: Pull Request title check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: Slashgear/action-check-pr-title@v4.3.0
+        with:
+          regexp: '(patch|minor|major): +.+$'
