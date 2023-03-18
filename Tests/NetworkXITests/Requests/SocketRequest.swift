@@ -9,7 +9,7 @@ import NetworkXI
 
 class SocketRequest: WebSocketRequest {
 
-    var url: WebSocketURL { DemoPiesocketComURL.v3Channel_123 }
+    var url: WebSocketURL { DemoPiesocketComURL.v3Networkxi }
     let parameters: [String: Any]
 
     init(api_key: String) {

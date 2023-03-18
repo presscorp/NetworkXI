@@ -8,27 +8,26 @@
 import Foundation
 
 /// Base service for web-socket message exchange
-public protocol WebSocketService: AnyObject {
+public protocol WebSocketService: AsyncSequence
+where Element == URLSessionWebSocketTask.Message, AsyncIterator == WebSocketStream.Iterator {
 
-    /// Setting delegate object to receive socket events
-    /// - Parameter delegate: Delegate object subscribes for socket events
-    func set(delegate: WebSocketDelegate)
+    typealias WebSocketStream = AsyncThrowingStream<Element, Error>
 
     ///  Establishing web-socket connection
     /// - Parameter request: Web-socket request that describes all needed details
-    func connect(using request: WebSocketRequest)
+    func connect(using request: WebSocketRequest) async throws
 
     /// Disconnecting the socket
-    func disconnect()
+    func disconnect() async throws
 
     /// Send binary data to the server
     /// - Parameter data: Binary data
-    func send(data: Data)
+    func send(data: Data) async throws
 
     /// Send plain text message
     /// - Parameter string: text message
-    func send(string: String)
+    func send(string: String) async throws
 
     ///  Send ping to the server
-    func ping()
+    func ping() async throws
 }

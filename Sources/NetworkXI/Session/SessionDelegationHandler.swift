@@ -32,9 +32,9 @@ extension SessionDelegationHandler: URLSessionDelegate {
 extension SessionDelegationHandler: URLSessionTaskDelegate {
 
     func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: Error?) {
-        if let lifeCycle = lifeCycle {
+        if let lifeCycle {
             lifeCycle.urlSession(session, task: task, didCompleteWithError: error)
-        } else if let webSocketLifeCycle = webSocketLifeCycle {
+        } else if let webSocketLifeCycle {
             webSocketLifeCycle.urlSession(session, task: task, didCompleteWithError: error)
         }
     }

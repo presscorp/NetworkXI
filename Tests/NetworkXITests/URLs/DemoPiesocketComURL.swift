@@ -15,5 +15,5 @@ struct DemoPiesocketComURL: WebSocketURLExtensible {
 
 extension DemoPiesocketComURL {
 
-    static let v3Channel_123 = Self("/v3/channel_123")
+    static let v3Networkxi = Self("/v3/networkxi")
 }

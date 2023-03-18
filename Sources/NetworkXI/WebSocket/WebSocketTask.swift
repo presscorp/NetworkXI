@@ -9,13 +9,11 @@ import Foundation
 
 public protocol WebSocketTask: AnyObject {
 
-    var originalRequest: URLRequest? { get }
+    var closeCode: URLSessionWebSocketTask.CloseCode { get }
 
-    func resume()
+    func receive() async throws -> URLSessionWebSocketTask.Message
 
-    func receive(completionHandler: @escaping (Result<URLSessionWebSocketTask.Message, Error>) -> Void)
-
-    func send(_ message: URLSessionWebSocketTask.Message, completionHandler: @escaping (Error?) -> Void)
+    func send(_ message: URLSessionWebSocketTask.Message) async throws
 
     func sendPing(pongReceiveHandler: @escaping @Sendable (Error?) -> Void)
 

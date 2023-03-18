@@ -14,16 +14,46 @@ public class WebSocketWorker {
 
     private weak var task: WebSocketTask?
 
-    private weak var delegate: WebSocketDelegate?
+    private var streamContinuation: WebSocketStream.Continuation?
+
+    private var stream: WebSocketStream?
+
+    private var newStream: WebSocketStream {
+        return WebSocketStream { [weak self] continuation in
+            self?.streamContinuation = continuation
+
+            Task { [weak task] in
+                guard let task else { return }
+                do {
+                    while task.closeCode == .invalid {
+                        let message = try await task.receive()
+                        if sessionInterface.loggingEnabled {
+                            if case .string(let string) = message {
+                                WebSocketLogger.log(receivedMessage: string)
+                            } else if case .data(let data) = message {
+                                WebSocketLogger.log(receivedData: data)
+                            }
+                        }
+
+                        continuation.yield(message)
+                    }
+                } catch {
+                    if sessionInterface.loggingEnabled { WebSocketLogger.log(error: error) }
+                    continuation.finish(throwing: error)
+                }
+            }
+        }
+    }
 
     ///  Initializer that accepts session adapter argument
     /// - Parameter sessionAdapter: Configured session adapter
     public init(sessionInterface: WebSocketSessionInterface) {
         self.sessionInterface = sessionInterface
-        sessionInterface.delegate = self
     }
 
-    deinit { disconnect() }
+    deinit {
+        Task { try await disconnect() }
+    }
 
     private func composeUrlRequest(from request: WebSocketRequest) -> URLRequest? {
         var urlComponents = URLComponents(string: request.url.absolutePath)
@@ -45,102 +75,77 @@ public class WebSocketWorker {
     }
 }
 
-extension WebSocketWorker: WebSocketSessionAdapterDelegate {
-
-    public func connected() {
-        if sessionInterface.loggingEnabled { task?.originalRequest.map(WebSocketLogger.logConnection) }
-
-        delegate?.connected()
-    }
-
-    public func disconnected(withCloseCode code: URLSessionWebSocketTask.CloseCode) {
-        delegate?.disconnected()
-    }
-
-    public func didSend(string: String, result: Result<Void, Error>) {
-        if sessionInterface.loggingEnabled {
-            switch result {
-            case .success: WebSocketLogger.log(sentMessage: string)
-            case .failure(let error): WebSocketLogger.log(sentMessage: string, error: error)
-            }
-        }
-
-        delegate?.didSend(string: string, result: result)
-    }
-
-    public func didSend(data: Data, result: Result<Void, Error>) {
-        if sessionInterface.loggingEnabled {
-            switch result {
-            case .success: WebSocketLogger.log(sentData: data)
-            case .failure(let error): WebSocketLogger.log(sentData: data, error: error)
-            }
-        }
-
-        delegate?.didSend(data: data, result: result)
-    }
-
-    public func received(data: Data) {
-        if sessionInterface.loggingEnabled { WebSocketLogger.log(receivedData: data) }
-
-        delegate?.received(data: data)
-    }
-
-    public func received(string: String) {
-        if sessionInterface.loggingEnabled { WebSocketLogger.log(receivedMessage: string) }
-
-        delegate?.received(string: string)
-    }
-
-    public func received(error: Error) {
-        if sessionInterface.loggingEnabled { WebSocketLogger.log(error: error) }
-
-        delegate?.received(error: error)
-    }
-
-    public func receivedPong() {
-        if sessionInterface.loggingEnabled { WebSocketLogger.logPingPong() }
-
-        delegate?.receivedPong()
-    }
-}
-
 extension WebSocketWorker: WebSocketService {
 
-    public func set(delegate: WebSocketDelegate) {
-        self.delegate = delegate
+    public typealias Element = URLSessionWebSocketTask.Message
+
+    public func makeAsyncIterator() -> AsyncIterator {
+        guard let stream else {
+            stream = newStream
+            return makeAsyncIterator()
+        }
+
+        return stream.makeAsyncIterator()
     }
 
-    public func connect(using request: WebSocketRequest) {
-        guard let urlRequest = composeUrlRequest(from: request) else { return }
+    public func connect(using request: WebSocketRequest) async throws {
+        guard let urlRequest = composeUrlRequest(from: request) else { throw NetworkError.unknown }
         if sessionInterface.loggingEnabled { WebSocketLogger.log(request: urlRequest) }
-        task = sessionInterface.resumedTask(with: urlRequest)
+        do {
+            task = try await sessionInterface.resumedTask(with: urlRequest)
+            if sessionInterface.loggingEnabled { WebSocketLogger.logConnection(for: urlRequest) }
+            stream = newStream
+        } catch {
+            WebSocketLogger.log(error: error)
+            throw error
+        }
     }
 
-    public func disconnect() {
+    public func disconnect() async throws {
         task?.cancel(with: .goingAway, reason: "goingAway".data(using: .utf8))
+        streamContinuation?.finish()
+        streamContinuation = nil
+        stream = nil
+        do {
+            try await sessionInterface.awaitDisconnect()
+            if sessionInterface.loggingEnabled { WebSocketLogger.logDisconnection() }
+        } catch {
+            WebSocketLogger.log(error: error)
+            throw error
+        }
     }
 
-    public func send(data: Data) {
-        guard let task = task else {
-            delegate?.didSend(data: data, result: .failure(NetworkError.cancelled))
-            return
+    public func send(data: Data) async throws {
+        guard let task = task else { throw NetworkError.cancelled }
+        do {
+            try await sessionInterface.send(data: data, via: task)
+            if sessionInterface.loggingEnabled { WebSocketLogger.log(sentData: data) }
+        } catch {
+            if sessionInterface.loggingEnabled { WebSocketLogger.log(sentData: data, error: error) }
+            throw error
         }
-        sessionInterface.send(data: data, via: task)
     }
 
-    public func send(string: String) {
-        guard let task = task else {
-            delegate?.didSend(string: string, result: .failure(NetworkError.cancelled))
-            return
+    public func send(string: String) async throws {
+        guard let task = task else { throw NetworkError.cancelled }
+        do {
+            try await sessionInterface.send(string: string, via: task)
+            if sessionInterface.loggingEnabled { WebSocketLogger.log(sentMessage: string) }
+        } catch {
+            if sessionInterface.loggingEnabled { WebSocketLogger.log(sentMessage: string, error: error) }
+            throw error
         }
-        sessionInterface.send(string: string, via: task)
     }
 
-    public func ping() {
-        guard let task = task else {
-            delegate?.received(error: NetworkError.cancelled)
-            return
+    public func ping() async throws {
+        guard let task = task else { throw NetworkError.cancelled }
+        do {
+            if sessionInterface.loggingEnabled { WebSocketLogger.logPing() }
+            try await sessionInterface.ping(via: task)
+            if sessionInterface.loggingEnabled { WebSocketLogger.logPong() }
+        } catch {
+            WebSocketLogger.log(error: error)
+            throw error
         }
-        sessionInterface.ping(via: task)
     }
 }

@@ -46,8 +46,12 @@ class WebSocketLogger {
         log(error)
     }
 
-    static func logPingPong() {
-        logPingPongAction()
+    static func logPing() {
+        logPingPong(action: "SENT PING")
+    }
+
+    static func logPong() {
+        logPingPong(action: "RECEIVED PONG")
     }
 
     private static func logConnectionStatus(_ request: URLRequest) {
@@ -88,13 +92,13 @@ class WebSocketLogger {
         print(log)
     }
 
-    private static func logPingPongAction() {
+    private static func logPingPong(action: String) {
         var log = ""
 
         log += "\n" + Self.separatorLine + "\n\n"
         log += title + "\n\n"
         log += "‣ TIME: " + Date().description + "\n\n"
-        log += "‣ ACTION: PING-PONG \n\n"
+        log += "‣ " + action.uppercased() + " \n\n"
         log += Self.separatorLine + "\n\n"
 
         print(log)
@@ -142,12 +146,12 @@ class WebSocketLogger {
         if let jsonDictionary = message.dictionary,
            let data = try? JSONSerialization.data(withJSONObject: jsonDictionary, options: [.prettyPrinted]),
            let jsonString = String(data: data, encoding: .utf8) {
-            log += "‣ " + action + " MESSAGE: " + jsonString + "\n\n"
+            log += "‣ " + action.uppercased() + " MESSAGE: " + jsonString + "\n\n"
         } else {
-            log += "‣ " + action + " MESSAGE: " + message + "\n\n"
+            log += "‣ " + action.uppercased() + " MESSAGE: " + message + "\n\n"
         }
 
-        if let error = error {
+        if let error {
             log += "‣ STATUS: ERROR ⚠️\n\n"
             log += "‣ REASON: " + error.localizedDescription + "\n\n"
         }
@@ -165,12 +169,12 @@ class WebSocketLogger {
         log += "‣ TIME: " + Date().description + "\n\n"
 
         if let jsonString = data.jsonString {
-            log += "‣ " + action + ": " + jsonString + "\n\n"
+            log += "‣ " + action.uppercased() + ": " + jsonString + "\n\n"
         } else {
-            log += "‣ " + action + ": " + data.base64EncodedString() + "\n\n"
+            log += "‣ " + action.uppercased() + ": " + data.base64EncodedString() + "\n\n"
         }
 
-        if let error = error {
+        if let error {
             log += "‣ STATUS: ERROR ⚠️\n\n"
             log += "‣ REASON: " + error.localizedDescription + "\n\n"
         }
