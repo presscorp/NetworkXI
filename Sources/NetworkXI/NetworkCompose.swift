@@ -27,8 +27,12 @@ extension NetworkCompose {
         let composedUrl: URL
         if request.encodesParametersInURL {
             var urlComponents = URLComponents(string: request.url.absolutePath)
-            urlComponents?.percentEncodedQueryItems = request.parameters.compactMap { name, value -> URLQueryItem? in
-                guard let value = (value as? CustomStringConvertible)?.description else { return nil }
+            urlComponents?.percentEncodedQueryItems = request.parameters.compactMap { name, anyValue -> URLQueryItem? in
+                guard var value = (anyValue as? CustomStringConvertible)?.description else { return nil }
+                if value.removingPercentEncoding == value,
+                   let percentEncodedValue = value.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) {
+                    value = percentEncodedValue
+                }
                 return URLQueryItem(name: name, value: value)
             }
             guard let url = urlComponents?.url else { return nil }
