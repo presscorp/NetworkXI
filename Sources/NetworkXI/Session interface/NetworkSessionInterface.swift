@@ -1,6 +1,6 @@
 //
 //  NetworkSessionInterface.swift
-//  
+//
 //
 //  Created by Zhalgas Baibatyr on 06.02.2023.
 //

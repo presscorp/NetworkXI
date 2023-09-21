@@ -10,23 +10,15 @@ import XCTest
 
 final class MockRequestTests: NetworkXITests {
 
-    func testMock() {
-        let expectation = expectation(description: #function)
+    func testMock() async {
+        let request = MockRequest(parameters: ["key": "value"])
+        let response = await networkService.make(request)
 
-        Task {
-            defer { expectation.fulfill() }
-
-            let request = MockRequest(parameters: ["key": "value"])
-            let response = await networkService.make(request)
-
-            guard response.success,
-                  let dict = response.jsonBody as? [String: String] else {
-                return XCTAssert(false)
-            }
-
-            XCTAssert(dict["key"] == "value")
+        guard response.success,
+              let dict = response.jsonBody as? [String: String] else {
+            return XCTAssert(false)
         }
 
-        wait(for: [expectation], timeout: 5)
+        XCTAssertEqual(dict["key"], "value")
     }
 }

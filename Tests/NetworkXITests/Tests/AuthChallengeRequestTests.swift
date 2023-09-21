@@ -20,24 +20,16 @@ final class AuthChallengeRequestTests: NetworkXITests {
         }
     }
 
-    func testRequest() {
-        let expectation = expectation(description: #function)
+    func testRequest() async {
+        let request = AnythingRequest(parameters: ["key": "value"])
+        let response = await networkService.make(request)
 
-        Task {
-            defer { expectation.fulfill() }
-
-            let request = AnythingRequest(parameters: ["key": "value"])
-            let response = await networkService.make(request)
-
-            guard response.success,
-                  let body = response.jsonBody,
-                  let dict = body["json"] as? [String: String] else {
-                return XCTAssert(false)
-            }
-
-            XCTAssert(dict["key"] == "value")
+        guard response.success,
+              let body = response.jsonBody,
+              let dict = body["json"] as? [String: String] else {
+            return XCTAssert(false)
         }
 
-        wait(for: [expectation], timeout: 5)
+        XCTAssertEqual(dict["key"], "value")
     }
 }

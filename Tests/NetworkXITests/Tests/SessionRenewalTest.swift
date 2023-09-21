@@ -18,16 +18,9 @@ final class SessionRenewalTest: NetworkXITests {
         sessionInterface.sessionRenewal = self
     }
 
-    func testSessionRenewal() {
-        let expectation = expectation(description: #function)
-
-        Task {
-            let response = await networkService.make(request)
-            XCTAssert(response.success)
-            expectation.fulfill()
-        }
-
-        wait(for: [expectation], timeout: 5)
+    func testSessionRenewal() async {
+        let response = await networkService.make(request)
+        XCTAssert(response.success)
     }
 }
 

@@ -10,12 +10,23 @@ import XCTest
 
 class NetworkXITests: XCTestCase {
 
-    let sessionInterface: NetworkSessionInterface = {
+    var sessionInterface: NetworkSessionInterface!
+    var networkService: NetworkService!
+
+    override func setUp() async throws {
+        try await super.setUp()
+
         let sessionAdapter = NetworkSessionAdapter()
         sessionAdapter.defaultSSLChallengeEnabled = true
         sessionAdapter.loggingEnabled = true
-        return sessionAdapter
-    }()
+        sessionInterface = sessionAdapter
 
-    lazy var networkService: NetworkService = NetworkWorker(sessionInterface: sessionInterface)
+        networkService = NetworkWorker(sessionInterface: sessionInterface)
+    }
+
+    override func tearDown() async throws {
+        networkService = nil
+        sessionInterface = nil
+        try await super.tearDown()
+    }
 }
