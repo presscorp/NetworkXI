@@ -10,9 +10,6 @@ import Foundation
 /// Interface between fundamental network session and its worker (request maker)
 public protocol NetworkSessionInterface: AnyObject {
 
-    /// Common HTTP headers applied to all requests made within this session
-    var additionalHTTPHeaders: [String: String] { get set }
-
     /// Default SSL certificate handling for the challenge
     var defaultSSLChallengeEnabled: Bool { get set }
 
@@ -28,6 +25,9 @@ public protocol NetworkSessionInterface: AnyObject {
 
     /// Cache set to session's configuration
     var cache: URLCache? { get }
+
+    /// Common HTTP headers applied to all requests made within this session
+    var additionalHTTPHeaders: [String: String] { get }
 
     init()
 

@@ -16,8 +16,6 @@ public class NetworkSessionAdapter: SessionAuthChallenger, NetworkConnectionChec
 
     public var sslCertificates = [NSData]()
 
-    public var additionalHTTPHeaders = [String: String]()
-
     public weak var sessionRenewal: SessionRenewalService?
 
     public var logger: NetworkLogger?
@@ -58,6 +56,16 @@ extension NetworkSessionAdapter: NetworkSessionInterface {
         )
         self.cache = configuration.urlCache
         return session
+    }
+
+    public var additionalHTTPHeaders: [String: String] {
+        guard let httpAdditionalHeaders = session.configuration.httpAdditionalHeaders else { return [:] }
+        var headers = [String: String]()
+        for (key, value) in httpAdditionalHeaders {
+            guard let key = key as? String, let value = value as? String else { continue }
+            headers[key] = value
+        }
+        return headers
     }
 
     public func make(_ request: URLRequest) async throws -> (Data, URLResponse) {
