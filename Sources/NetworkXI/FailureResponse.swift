@@ -34,4 +34,6 @@ public extension FailureResponse {
     static var unknown: Self { Self(statusCode: NSURLErrorUnknown, error: .unknown) }
 
     static var notAvailable: Self { Self(statusCode: NSURLErrorNotConnectedToInternet, error: .notAvailable) }
+
+    static func server(code: Int, error: NSError?) -> Self { Self(statusCode: code, error: .server(error)) }
 }
