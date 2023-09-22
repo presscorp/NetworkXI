@@ -11,37 +11,30 @@ import NetworkXI
 
 class WebSocketTests: XCTestCase {
 
-    lazy var sessionInterface = { () -> WebSocketSessionInterface in
-        let sessionAdapter = WebSocketSessionAdapter()
-        sessionAdapter.loggingEnabled = true
-        sessionAdapter.defaultSSLChallengeEnabled = true
-        return sessionAdapter
-    }()
+    var sessionInterface: WebSocketSessionInterface!
 
-    lazy var webSocketService: some WebSocketService = WebSocketWorker(sessionInterface: sessionInterface)
+    var webSocketService: (any WebSocketService)!
 
     override func setUp() async throws {
         try await super.setUp()
-        let request = SocketRequest(api_key: "VCXCEuvhGcBDP7XhiJJUDvR1e1D3eiVjgZ9VRiaV&notify_self")
+        let sessionAdapter = WebSocketSessionAdapter()
+        sessionAdapter.loggingEnabled = true
+        sessionAdapter.defaultSSLChallengeEnabled = true
+        sessionInterface = sessionAdapter
+
+        webSocketService = WebSocketWorker(sessionInterface: sessionInterface)
+
+        let request = SocketRequest(api_key: "5n2D2acPAOwvZ4kyXAlzFqwFb0GHya2Fkd6BGWhh")
         try await webSocketService.connect(using: request)
     }
 
     override func tearDown() async throws {
-        try await super.tearDown()
         try await webSocketService.disconnect()
+        try await super.tearDown()
     }
 
     func testPingPong() async throws {
-        let expectation = expectation(description: "Ping-pong")
-
-        do {
-            try await webSocketService.ping()
-            expectation.fulfill()
-        } catch {
-            return XCTAssert(false)
-        }
-
-        wait(for: [expectation], timeout: 3)
+        try await webSocketService.ping()
     }
 
     func testSendReceiveMessage() async {
@@ -72,6 +65,6 @@ class WebSocketTests: XCTestCase {
         }
 
         let expectations = [expectation1, expectation2]
-        wait(for: expectations, timeout: 3)
+        await fulfillment(of: expectations, timeout: 5, enforceOrder: true)
     }
 }

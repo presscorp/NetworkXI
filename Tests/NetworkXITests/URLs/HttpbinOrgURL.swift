@@ -19,6 +19,8 @@ extension HttpbinOrgURL {
 
     static let post = Self("/post")
 
+    static let imagePng = Self("/image/png")
+
     static func status(_ code: String) -> Self {
         Self("/status/" + code)
     }

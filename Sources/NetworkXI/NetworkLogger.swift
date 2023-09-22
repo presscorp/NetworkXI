@@ -60,21 +60,32 @@ class NetworkLogger {
     }
 
     /// Network response logging
-    static func log(request: URLRequest, response: HTTPURLResponse?, responseData: Data?, error: NSError?) {
-        log(request, response, responseData, error)
+    static func log(
+        request: URLRequest,
+        response: HTTPURLResponse?,
+        responseData: Data?,
+        error: NSError?,
+        responseIsCached: Bool,
+        responseIsMocked: Bool
+    ) {
+        log(request, response, responseData, error, responseIsCached, responseIsMocked)
     }
 
     private static func log(
         _ request: URLRequest,
         _ response: HTTPURLResponse?,
         _ responseData: Data?,
-        _ error: NSError?
+        _ error: NSError?,
+        _ responseIsCached: Bool,
+        _ responseIsMocked: Bool
     ) {
         var log = ""
 
         log += "\n" + Self.separatorLine + "\n\n"
 
-        log += title("Response ⬅️") + "\n\n"
+        let titlePrefix = responseIsCached ? "Cached " : (responseIsMocked ? "Mocked " : "")
+
+        log += title(titlePrefix + "Response ⬅️") + "\n\n"
         
         log += "‣ TIME: " + Date().description + "\n\n"
 

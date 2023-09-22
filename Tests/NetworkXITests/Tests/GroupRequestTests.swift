@@ -54,39 +54,15 @@ final class GroupRequestTests: NetworkXITests {
         return values
     }
 
-    func testGroupRequests() {
-        let expectation = expectation(description: #function)
-
-        Task {
-            defer { expectation.fulfill() }
-
-            do {
-                let initialValues = Array(1...3).map { $0.description }
-                let values = try await fetch(initialValues: initialValues)
-                XCTAssert(values.sorted() == initialValues)
-            } catch {
-                XCTAssert(false)
-            }
-        }
-
-        wait(for: [expectation], timeout: 5)
+    func testGroupRequests() async throws {
+        let initialValues = Array(1...3).map { $0.description }
+        let values = try await fetch(initialValues: initialValues)
+        XCTAssertEqual(values.sorted(), initialValues)
     }
 
-    func testGroupRequestsInSequence() {
-        let expectation = expectation(description: #function)
-
-        Task {
-            defer { expectation.fulfill() }
-
-            do {
-                let initialValues = Array(1...3).map { $0.description }
-                let values = try await fetchInSequence(initialValues: initialValues)
-                XCTAssert(values == initialValues)
-            } catch {
-                XCTAssert(false)
-            }
-        }
-
-        wait(for: [expectation], timeout: 5)
+    func testGroupRequestsInSequence() async throws {
+        let initialValues = Array(1...3).map { $0.description }
+        let values = try await fetchInSequence(initialValues: initialValues)
+        XCTAssertEqual(values, initialValues)
     }
 }

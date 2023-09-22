@@ -1,6 +1,6 @@
 //
 //  NetworkSessionInterface.swift
-//  
+//
 //
 //  Created by Zhalgas Baibatyr on 06.02.2023.
 //
@@ -25,6 +25,9 @@ public protocol NetworkSessionInterface: AnyObject {
 
     /// Indication of log printing of request / response into the console
     var loggingEnabled: Bool { get set }
+
+    /// Cache set to session's configuration
+    var cache: URLCache? { get }
 
     init()
 

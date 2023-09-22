@@ -29,25 +29,35 @@ public class NetworkWorker: NetworkCompose {
             NetworkLogger.log(request: urlRequest)
         }
 
+        var responseIsMocked = false
+        var responseIsCached = false
         defer {
             if sessionInterface.loggingEnabled {
                 NetworkLogger.log(
                     request: urlRequest,
                     response: response.urlResponse as? HTTPURLResponse,
                     responseData: response.data,
-                    error: response.error
+                    error: response.error,
+                    responseIsCached: responseIsCached,
+                    responseIsMocked: responseIsMocked
                 )
             }
         }
 
-        // Mocked response processing
+        // Return mocked response if available
         if let url = urlRequest.url, let mockResponse = request.mockResponse {
+            responseIsMocked = true
             response = composeMock(from: url, mockResponse)
             return mockResponse
         }
 
-        guard sessionInterface.networkIsAvailable() else {
-            return FailureResponse.notAvailable
+        // Return cached response if possible
+        if request.canRecieveCachedResponse,
+           let cache = sessionInterface.cache,
+           let cachedResponse = cache.cachedResponse(for: urlRequest) {
+            responseIsCached = true
+            (response.data, response.urlResponse) = (cachedResponse.data, cachedResponse.response)
+            return composeResponse(from: response.urlResponse, response.data, response.error)
         }
 
         do {
@@ -59,14 +69,13 @@ public class NetworkWorker: NetworkCompose {
         } catch {
             response.error = error as NSError?
         }
-
         return composeResponse(from: response.urlResponse, response.data, response.error)
     }
 }
 
 extension NetworkWorker: NetworkService {
 
-    public func make<T: NetworkRequest>(_ request: T) async -> NetworkResponse {
+    public func make(_ request: NetworkRequest) async -> NetworkResponse {
         let response = await makeRequest(request)
 
         if let sessionRenewal = sessionInterface.sessionRenewal,
@@ -81,5 +90,22 @@ extension NetworkWorker: NetworkService {
         }
 
         return response
+    }
+
+    public func clearCachedResponse(for request: NetworkRequest) {
+        guard let urlRequest = composeUrlRequest(from: request),
+              let cache = sessionInterface.cache else {
+            return
+        }
+
+        cache.removeCachedResponse(for: urlRequest)
+    }
+
+    public func clearAllCachedResponses() {
+        guard let cache = sessionInterface.cache else {
+            return
+        }
+
+        cache.removeAllCachedResponses()
     }
 }
