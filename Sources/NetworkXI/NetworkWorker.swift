@@ -19,21 +19,21 @@ public class NetworkWorker: NetworkCompose {
     }
 
     private func makeRequest<T: NetworkRequest>(_ request: T) async -> NetworkResponse {
-        var response = (urlResponse: URLResponse?.none, data: Data?.none, error: NSError?.none)
+        var response = (urlResponse: URLResponse?.none, data: Data?.none, error: Error?.none)
 
         guard let urlRequest = composeUrlRequest(from: request) else {
             return FailureResponse.unknown
         }
 
-        if sessionInterface.loggingEnabled {
-            NetworkLogger.log(request: urlRequest)
+        if let logger = sessionInterface.logger {
+            logger.log(request: urlRequest)
         }
 
         var responseIsMocked = false
         var responseIsCached = false
         defer {
-            if sessionInterface.loggingEnabled {
-                NetworkLogger.log(
+            if let logger = sessionInterface.logger {
+                logger.log(
                     request: urlRequest,
                     response: response.urlResponse as? HTTPURLResponse,
                     responseData: response.data,

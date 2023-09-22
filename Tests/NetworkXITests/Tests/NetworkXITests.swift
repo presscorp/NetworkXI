@@ -18,7 +18,7 @@ class NetworkXITests: XCTestCase {
 
         let sessionAdapter = NetworkSessionAdapter()
         sessionAdapter.defaultSSLChallengeEnabled = true
-        sessionAdapter.loggingEnabled = true
+        sessionAdapter.logger = ConsoleLogger()
         sessionInterface = sessionAdapter
 
         networkService = NetworkWorker(sessionInterface: sessionInterface)

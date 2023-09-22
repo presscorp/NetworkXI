@@ -23,8 +23,8 @@ public protocol NetworkSessionInterface: AnyObject {
     /// Normally used to sign requests with updated authorization token
     var sessionRenewal: SessionRenewalService? { get set }
 
-    /// Indication of log printing of request / response into the console
-    var loggingEnabled: Bool { get set }
+    /// Log printer object for both original request and response
+    var logger: NetworkLogger? { get set }
 
     /// Cache set to session's configuration
     var cache: URLCache? { get }

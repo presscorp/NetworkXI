@@ -11,16 +11,16 @@ public struct NetworkError: RawRepresentable, Equatable, Error {
 
     public let rawValue: String
 
-    public let error: NSError?
+    public let serverError: Error?
 
     public init(rawValue: String = #function) {
         self.rawValue = rawValue
-        error = nil
+        serverError = nil
     }
 
-    public init(rawValue: String = #function, _ error: NSError) {
-        self.rawValue = rawValue + " | " + error.localizedDescription
-        self.error = error
+    public init(rawValue: String = #function, serverError: Error?) {
+        self.rawValue = [rawValue, serverError?.localizedDescription].compactMap { $0 }.joined(separator: " | ")
+        self.serverError = serverError
     }
 }
 
@@ -41,8 +41,5 @@ public extension NetworkError {
     /// Composing custom server related error based on optional error
     /// - Parameter error: Fundamntal network error
     /// - Returns: Custom server-side error
-    static func serverSide(_ error: NSError? = nil) -> Self {
-        guard let error = error else { return Self() }
-        return Self(error)
-    }
+    static func server(_ error: NSError?) -> Self { Self(serverError: error) }
 }

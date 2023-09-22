@@ -1,6 +1,6 @@
 //
 //  NetworkCompose.swift
-//  
+//
 //
 //  Created by Zhalgas Baibatyr on 06.02.2023.
 //
@@ -41,7 +41,7 @@ extension NetworkCompose {
             guard let url = URL(string: request.url.absolutePath) else { return nil }
             composedUrl = url
         }
-        
+
         // Compose request
         var urlRequest = URLRequest(url: composedUrl)
         urlRequest.httpMethod = request.method.rawValue
@@ -119,13 +119,21 @@ extension NetworkCompose {
         return urlRequest
     }
 
-    func composeResponse(from urlResponse: URLResponse?, _ data: Data?, _ error: NSError?) -> NetworkResponse {
+    func composeResponse(from urlResponse: URLResponse?, _ data: Data?, _ error: Error?) -> NetworkResponse {
         guard let httpUrlResponse = urlResponse as? HTTPURLResponse else {
-            if let error = error as NSError? {
+            if let error = error as? NetworkError {
+                switch error {
+                case .cancelled: return FailureResponse.cancelled
+                case .timeout: return FailureResponse.timeout
+                case .unknown: return FailureResponse.unknown
+                case .notAvailable: return FailureResponse.notAvailable
+                default: break
+                }
+            } else if let error = error as NSError? {
                 switch error.code {
                 case NSURLErrorCancelled: return FailureResponse.cancelled
                 case NSURLErrorTimedOut: return FailureResponse.timeout
-                default: break
+                default: return FailureResponse.server(code: error.code, error: error)
                 }
             }
             return FailureResponse.unknown
@@ -134,7 +142,7 @@ extension NetworkCompose {
         guard 200..<300 ~= httpUrlResponse.statusCode else {
             return FailureResponse(
                 statusCode: httpUrlResponse.statusCode,
-                error: .serverSide(error),
+                error: .server(error as? NSError),
                 body: data,
                 headers: httpUrlResponse.allHeaderFields
             )
@@ -150,7 +158,7 @@ extension NetworkCompose {
     func composeMock(
         from url: URL,
         _ response: NetworkResponse
-    ) -> (urlResponse: URLResponse?, data: Data?, error: NSError?) {
+    ) -> (urlResponse: URLResponse?, data: Data?, error: Error?) {
         var headerFields = [String: String]()
         response.headers.forEach { key, value in
             guard let key = key as? String, let value = value as? String else { return }
@@ -164,6 +172,6 @@ extension NetworkCompose {
             headerFields: headerFields
         )
 
-        return (urlResponse, response.body, error: response.error?.error)
+        return (urlResponse, response.body, error: response.error)
     }
 }
