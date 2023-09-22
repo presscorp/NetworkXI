@@ -22,6 +22,8 @@ public class ClassicNetworkSessionAdapter: SessionAuthChallenger, SessionLifeCyc
 
     public var loggingEnabled = false
 
+    public private(set) weak var cache: URLCache?
+
     private lazy var session = setNewSession()
 
     private let sessionDelegate = SessionDelegationHandler()
@@ -73,12 +75,12 @@ extension ClassicNetworkSessionAdapter: NetworkSessionInterface {
         configuration: URLSessionConfiguration = URLSession.shared.configuration,
         delegateQueue: OperationQueue? = nil
     ) -> URLSession {
-        let configuration = URLSession.shared.configuration
         session = URLSession(
             configuration: configuration,
             delegate: sessionDelegate,
             delegateQueue: delegateQueue
         )
+        self.cache = configuration.urlCache
         return session
     }
 

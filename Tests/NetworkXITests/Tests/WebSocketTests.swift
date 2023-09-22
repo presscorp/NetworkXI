@@ -24,7 +24,7 @@ class WebSocketTests: XCTestCase {
 
         webSocketService = WebSocketWorker(sessionInterface: sessionInterface)
 
-        let request = SocketRequest(api_key: "VCXCEuvhGcBDP7XhiJJUDvR1e1D3eiVjgZ9VRiaV&notify_self")
+        let request = SocketRequest(api_key: "5n2D2acPAOwvZ4kyXAlzFqwFb0GHya2Fkd6BGWhh")
         try await webSocketService.connect(using: request)
     }
 

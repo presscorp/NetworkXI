@@ -25,6 +25,8 @@ public protocol NetworkRequest: AnyObject {
 
     var mockResponse: NetworkResponse? { get }
 
+    var canRecieveCachedResponse: Bool { get }
+
     func edit(httpHeaders: inout [String: String])
 }
 
@@ -42,6 +44,8 @@ public extension NetworkRequest {
     }
 
     var mockResponse: NetworkResponse? { nil }
+
+    var canRecieveCachedResponse: Bool { false }
 
     func edit(httpHeaders: inout [String: String]) {}
 

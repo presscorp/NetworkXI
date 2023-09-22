@@ -26,6 +26,9 @@ public protocol NetworkSessionInterface: AnyObject {
     /// Indication of log printing of request / response into the console
     var loggingEnabled: Bool { get set }
 
+    /// Cache set to session's configuration
+    var cache: URLCache? { get }
+
     init()
 
     /// Make fundamental HTTP request; It's much better to use worker (NetworkService) instead of applying this interface directly for network tasks
