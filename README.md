@@ -13,6 +13,7 @@
 - NetworkXI provides the opportunity to renew session by updating authorization
 - NetworkXI supports SSL certificate pinning along with default challenge
 - NetworkXI supports easily implemented response mocking
+- NetworkS supports response caching feature
 - NetworkXI supports separate implementation (`WebSocketSessionInterface`, `WebSocketService`) of web-socket message
 exchange
 
